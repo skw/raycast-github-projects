@@ -1,6 +1,7 @@
 import { ActionPanel, List, Action, getPreferenceValues, LocalStorage } from "@raycast/api";
 import { useCallback, useEffect, useState } from "react";
 import { graphqlClient, Project, RecentProjectsQuery, recentProjectsQuery } from "./query";
+import { ProjectItem } from "./projectItem";
 import { Preferences } from "./preferences";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
@@ -30,20 +31,6 @@ export default function Command() {
     }
 
     fetchRecentProjects();
-  }, []);
-
-  const onOpenProject = useCallback(async (url: string) => {
-    const currentJson = await LocalStorage.getItem(`recently-viewed`);
-
-    const hash = currentJson ? JSON.parse(currentJson.toString()) : {};
-
-    LocalStorage.setItem(
-      `recently-viewed`,
-      JSON.stringify({
-        ...hash,
-        [url]: Date.now(),
-      })
-    );
   }, []);
 
   useEffect(() => {
@@ -78,33 +65,7 @@ export default function Command() {
       {recentlyViewedProjects.length > 0 ? (
         <List.Section title="Recently Viewed">
           {recentlyViewedProjects.map((p) => (
-            <List.Item
-              key={p.id}
-              title={p.title}
-              icon={{ source: "table.svg" }}
-              detail={
-                <List.Item.Detail
-                  markdown={p.shortDescription}
-                  metadata={
-                    <List.Item.Detail.Metadata>
-                      <List.Item.Detail.Metadata.Label title="Public" text={p.public.toString()} />
-                      <List.Item.Detail.Metadata.Separator />
-                      <List.Item.Detail.Metadata.Label title="Last Updated" text={dayjs(p.updatedAt).fromNow()} />
-                      <List.Item.Detail.Metadata.Separator />
-                      <List.Item.Detail.Metadata.Label title="Items" text={`${p.items.totalCount}`} />
-                      <List.Item.Detail.Metadata.Separator />
-                      <List.Item.Detail.Metadata.Label title="Views" text={`${p.views.totalCount}`} />
-                      <List.Item.Detail.Metadata.Separator />
-                    </List.Item.Detail.Metadata>
-                  }
-                />
-              }
-              actions={
-                <ActionPanel>
-                  <Action.OpenInBrowser title="Open Project" url={p.url} onOpen={onOpenProject} />
-                </ActionPanel>
-              }
-            />
+            <ProjectItem key={p.id} project={p} />
           ))}
         </List.Section>
       ) : null}
@@ -113,33 +74,7 @@ export default function Command() {
           {recentProjects
             .filter((p) => !recentlyViewedProjectMap.get(p.url))
             .map((p) => (
-              <List.Item
-                key={p.id}
-                title={p.title}
-                icon={{ source: "table.svg" }}
-                detail={
-                  <List.Item.Detail
-                    markdown={p.shortDescription}
-                    metadata={
-                      <List.Item.Detail.Metadata>
-                        <List.Item.Detail.Metadata.Label title="Public" text={p.public.toString()} />
-                        <List.Item.Detail.Metadata.Separator />
-                        <List.Item.Detail.Metadata.Label title="Last Updated" text={dayjs(p.updatedAt).fromNow()} />
-                        <List.Item.Detail.Metadata.Separator />
-                        <List.Item.Detail.Metadata.Label title="Items" text={`${p.items.totalCount}`} />
-                        <List.Item.Detail.Metadata.Separator />
-                        <List.Item.Detail.Metadata.Label title="Views" text={`${p.views.totalCount}`} />
-                        <List.Item.Detail.Metadata.Separator />
-                      </List.Item.Detail.Metadata>
-                    }
-                  />
-                }
-                actions={
-                  <ActionPanel>
-                    <Action.OpenInBrowser title="Open Project" url={p.url} onOpen={onOpenProject} />
-                  </ActionPanel>
-                }
-              />
+              <ProjectItem key={p.id} project={p} />
             ))}
         </List.Section>
       ) : (
