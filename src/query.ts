@@ -29,8 +29,14 @@ query recentProjects($login: String!) {
         items {
           totalCount
         }
-        views {
+        views(first:50, orderBy: { field: POSITION, direction: ASC }){
           totalCount
+          nodes {
+            id
+            name
+            number
+            layout
+          }
         }
       }
     }
@@ -50,7 +56,15 @@ export interface Project {
   };
   views: {
     totalCount: number;
+    nodes: Array<View>;
   };
+}
+
+export interface View {
+  id: string;
+  name: string;
+  number: number;
+  layout: string;
 }
 
 export interface RecentProjectsQuery {

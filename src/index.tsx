@@ -1,6 +1,6 @@
-import { ActionPanel, List, Action, getPreferenceValues, LocalStorage } from "@raycast/api";
-import { useCallback, useEffect, useState } from "react";
-import { graphqlClient, Project, RecentProjectsQuery, recentProjectsQuery } from "./query";
+import { ActionPanel, List, Action, getPreferenceValues, LocalStorage, closeMainWindow } from "@raycast/api";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { graphqlClient, Project, RecentProjectsQuery, recentProjectsQuery, View } from "./query";
 import { ProjectItem } from "./projectItem";
 import { Preferences } from "./preferences";
 import dayjs from "dayjs";
@@ -13,8 +13,8 @@ const { login } = getPreferenceValues<Preferences>();
 export default function Command() {
   const [isLoadingRecentProjects, setIsLoadingRecentProjects] = useState<boolean>(true);
   const [recentProjects, setRecentProjects] = useState<Array<Project>>([]);
-  const [recentlyViewedProjects, setRecentlyViewedProjects] = useState<Array<Project>>([]);
-  const [recentlyViewedProjectMap, setRecentlyViewedProjectMap] = useState<Map<string, Project>>(new Map());
+  const [recentlyViewed, setRecentlyViewed] = useState<Array<RecentlyViewedItem>>([]);
+  const recentlyViewedSet = useMemo(() => new Set(recentlyViewed.map((item) => item.key)), [recentlyViewed]);
 
   useEffect(() => {
     async function fetchRecentProjects() {
@@ -36,17 +36,8 @@ export default function Command() {
   useEffect(() => {
     async function parseRecentlyViewedProjects() {
       try {
-        const currentJson = await LocalStorage.getItem(`recently-viewed`);
-
-        if (!currentJson) return;
-
-        const hash = JSON.parse(currentJson.toString());
-
-        setRecentlyViewedProjects(recentProjects.filter((project) => hash[project.url]).sort());
-
-        setRecentlyViewedProjectMap(
-          new Map(recentProjects.filter((project) => hash[project.url]).map((project) => [project.url, project]))
-        );
+        const recentlyViewedItems = await getRecentlyViewed(recentProjects);
+        setRecentlyViewed(recentlyViewedItems.sort((a, b) => (a.value < b.value ? 1 : -1)).slice(0, 5));
       } catch (error) {
         console.error(error);
       }
@@ -62,17 +53,17 @@ export default function Command() {
       isShowingDetail
       isLoading={isLoadingRecentProjects}
     >
-      {recentlyViewedProjects.length > 0 ? (
+      {recentlyViewed.length > 0 ? (
         <List.Section title="Recently Viewed">
-          {recentlyViewedProjects.map((p) => (
-            <ProjectItem key={p.id} project={p} />
+          {recentlyViewed.map((item) => (
+            <ProjectItem key={item.key} project={item.project} view={item.view} lastViewed={item.value} />
           ))}
         </List.Section>
       ) : null}
       {recentProjects.length > 0 && !isLoadingRecentProjects ? (
         <List.Section title="Recently Updated Projects">
           {recentProjects
-            .filter((p) => !recentlyViewedProjectMap.get(p.url))
+            .filter((p) => !recentlyViewedSet.has(p.url))
             .map((p) => (
               <ProjectItem key={p.id} project={p} />
             ))}
@@ -82,4 +73,46 @@ export default function Command() {
       )}
     </List>
   );
+}
+
+async function getRecentlyViewed(projects: Array<Project>): Promise<RecentlyViewedItem[]> {
+  const currentJson = await LocalStorage.getItem(`recently-viewed`);
+
+  if (!currentJson) return [];
+
+  const hash = JSON.parse(currentJson.toString());
+
+  if (typeof hash !== "object") throw "recently-viewed is not a JS object";
+
+  const recentlyViewed: RecentlyViewedItem[] = [];
+
+  projects.forEach((project) => {
+    if (hash[project.url]) {
+      recentlyViewed.push({
+        key: project.url,
+        value: hash[project.url],
+        project: project,
+      });
+    }
+
+    project.views.nodes.forEach((view) => {
+      if (hash[`${project.url}/views/${view.number}`]) {
+        recentlyViewed.push({
+          key: `${project.url}/views/${view.number}`,
+          value: hash[project.url],
+          project: project,
+          view,
+        });
+      }
+    });
+  });
+
+  return recentlyViewed;
+}
+
+interface RecentlyViewedItem {
+  key: string;
+  value: number;
+  project: Project;
+  view?: View;
 }
