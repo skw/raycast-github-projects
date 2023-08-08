@@ -5,6 +5,10 @@
   "description": "Show recently viewed and updated GitHub projects.",
   "icon": "command-icon.png",
   "author": "skw",
+  "categories": [
+    "Developer Tools",
+    "Productivity"
+  ],
   "license": "MIT",
   "commands": [
     {
