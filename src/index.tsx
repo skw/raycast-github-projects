@@ -1,5 +1,5 @@
-import { ActionPanel, List, Action, getPreferenceValues, LocalStorage, closeMainWindow } from "@raycast/api";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { List, getPreferenceValues, LocalStorage, Icon } from "@raycast/api";
+import { useEffect, useMemo, useState } from "react";
 import { graphqlClient, Project, RecentProjectsQuery, recentProjectsQuery, View } from "./query";
 import { ProjectItem } from "./projectItem";
 import { Preferences } from "./preferences";
@@ -69,7 +69,7 @@ export default function Command() {
             ))}
         </List.Section>
       ) : (
-        <List.EmptyView icon={{ source: "https://placekitten.com/500/500" }} title="No projects found" />
+        <List.EmptyView icon={Icon.XMarkCircle} title="No projects found" />
       )}
     </List>
   );
