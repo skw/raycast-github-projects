@@ -7,7 +7,7 @@ Show recently viewed and updated GitHub projects.
 ## Setup
 
 1. Install the extension from https://www.raycast.com/skw/raycast-github-projects
-2. Launch the `Show GitHub Projects` command. The first time any of the commands are launched, you'll be prompted to a provide a PAT token with project permissions, and the repo you'd like to use. **Note** Currently the GraphQL API (which this extension uses) does not support fine-grained PATs. You must provide a Classic token with `repo` scope.
+2. Launch the `Show GitHub Projects` command. The first time any of the commands are launched, you'll be prompted to a provide a PAT token with project permissions. **Note** Currently the GraphQL API (which this extension uses) does not support fine-grained PATs. You must provide a Classic token with `project` scope.
 
 That's it!
 
